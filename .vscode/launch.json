@@ -8,7 +8,7 @@
         "type": "coreclr",
         "request": "launch",
         "preLaunchTask": "build",
-        "program": "${workspaceFolder}/ConsoleClient/bin/Debug/netcoreapp3.1/ConsoleClient.dll",
+        "program": "${workspaceFolder}/TgtgWatcherService/bin/Debug/netcoreapp3.1/TgtgWatcherService.dll",
         "args": [],
         "cwd": "${workspaceFolder}",
         "stopAtEntry": false,

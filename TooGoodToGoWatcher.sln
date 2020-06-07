@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleClient", "ConsoleClient\ConsoleClient.csproj", "{F39C0480-51FE-41F6-BD60-597C32B6F23B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TgtgWatcherService", "TgtgWatcherService\TgtgWatcherService.csproj", "{F39C0480-51FE-41F6-BD60-597C32B6F23B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiClient", "ApiClient\ApiClient.csproj", "{BA842943-2CE3-4E28-A677-C43884A7D561}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TgtgApiClient", "TgtgApiClient\TgtgApiClient.csproj", "{BA842943-2CE3-4E28-A677-C43884A7D561}"
 EndProject
 Global
 	GlobalSection(SolutionProperties) = preSolution
