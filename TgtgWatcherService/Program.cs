@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace ConsoleClient
+namespace TgtgWatcherService
 {
     class Program
     {
@@ -31,6 +31,8 @@ namespace ConsoleClient
             {
                 // Here goes your internal application dependencies
                 // like EntityFramework context, worker, endpoint, etc.
+                services.AddOptions();
+                services.Configure<AppConfig>(hostContext.Configuration.GetSection("AppConfig"));
                 services.AddScoped<IHostedService, TimedHostedService>();
             });
 

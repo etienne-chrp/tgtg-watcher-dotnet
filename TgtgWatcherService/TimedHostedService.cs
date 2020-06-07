@@ -1,4 +1,5 @@
 using System;
+using System.Configuration;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,98 +10,107 @@ using System.Threading.Tasks;
 using ApiClient;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
-public class TimedHostedService : IHostedService, IDisposable
+namespace TgtgWatcherService
 {
-    private readonly ILogger _logger;
-    private Timer _timerSession;
-    private Timer _timerItems;
-
-    const string loginSessionFilePath = ".loginSession";
-    private List<BussinessesItem> lastStatus = new List<BussinessesItem>();
-    private HttpClient iftttClient = new HttpClient()
+    public class TimedHostedService : IHostedService, IDisposable
     {
-        BaseAddress = new Uri("https://maker.ifttt.com")
-    };
-    private ApiClient.ApiClient apiClient = new ApiClient.ApiClient();
-    private LoginSession loginSession = null;
+        private readonly ILogger _logger;
+        private IOptions<AppConfig> _appConfig;
+        private Timer _timerSession;
+        private Timer _timerItems;
 
-    public TimedHostedService(ILogger<TimedHostedService> logger)
-    {
-        _logger = logger;
-    }
-
-    public Task StartAsync(CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Service is starting.");
-
-        RefreshSession(null);
-        _timerSession = new Timer(RefreshSession, null, TimeSpan.Zero, TimeSpan.FromSeconds(3600));
-        _timerItems = new Timer(CheckItems, null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
-
-        return Task.CompletedTask;
-    }
-
-    private void CheckItems(object state)
-    {
-        var items = apiClient.ListFavoriteBusinesses(loginSession).Result;
-
-        foreach (var i in items)
+        const string loginSessionFilePath = ".loginSession";
+        private List<BussinessesItem> lastStatus = new List<BussinessesItem>();
+        private HttpClient iftttClient = new HttpClient()
         {
-            Console.WriteLine($"{i.DisplayName} - {i.ItemsAvailable}");
+            BaseAddress = new Uri("https://maker.ifttt.com")
+        };
+        private ApiClient.ApiClient apiClient = new ApiClient.ApiClient();
+        private LoginSession loginSession = null;
 
-            var previousStatus = lastStatus.FirstOrDefault(x => x.Item.Id == i.Item.Id);
-
-            if (previousStatus != null &&
-                previousStatus.ItemsAvailable == 0 &&
-                i.ItemsAvailable > 0)
-                SendNotification(i).Wait();
+        public TimedHostedService(ILogger<TimedHostedService> logger, IOptions<AppConfig> appConfig)
+        {
+            _logger = logger;
+            _appConfig = appConfig;
         }
 
-        lastStatus = items;
-    }
-
-    private void RefreshSession(object state)
-    {
-        _logger.LogInformation("Service is running.");
-
-        if (!File.Exists(loginSessionFilePath))
+        public Task StartAsync(CancellationToken cancellationToken)
         {
-            loginSession = apiClient.LoginByEmail("siven_7+tgtgtest@hotmail.com", "jbrFTGe47PpieFpj").Result;
-            UpdateLoginSessionFile(loginSession);
+            _logger.LogInformation("Service is starting.");
+
+            RefreshSession(null);
+            _timerSession = new Timer(RefreshSession, null, TimeSpan.Zero, TimeSpan.FromSeconds(3600));
+            _timerItems = new Timer(CheckItems, null, TimeSpan.Zero, TimeSpan.FromSeconds(30));
+
+            return Task.CompletedTask;
         }
-        else
+
+        private void CheckItems(object state)
         {
-            var loginSessionJson = File.ReadAllText(loginSessionFilePath);
-            loginSession = JsonSerializer.Deserialize<LoginSession>(loginSessionJson);
+            var items = apiClient.ListFavoriteBusinesses(loginSession).Result;
 
-            apiClient.RefreshToken(loginSession).Wait();
-            UpdateLoginSessionFile(loginSession);
+            foreach (var i in items)
+            {
+                _logger.LogDebug($"{i.DisplayName} - {i.ItemsAvailable}");
+
+                var previousStatus = lastStatus.FirstOrDefault(x => x.Item.Id == i.Item.Id);
+
+                if (previousStatus != null &&
+                    previousStatus.ItemsAvailable == 0 &&
+                    i.ItemsAvailable > 0)
+                    SendNotification(i).Wait();
+            }
+
+            lastStatus = items;
         }
-    }
 
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Service is stopping.");
+        private void RefreshSession(object state)
+        {
+            _logger.LogInformation("Service is running.");
 
-        _timerSession?.Change(Timeout.Infinite, 0);
+            if (!File.Exists(loginSessionFilePath))
+            {
+                loginSession = apiClient.LoginByEmail(
+                    _appConfig.Value.TgtgUsername,
+                    _appConfig.Value.TgtgPassword
+                ).Result;
+                UpdateLoginSessionFile(loginSession);
+            }
+            else
+            {
+                var loginSessionJson = File.ReadAllText(loginSessionFilePath);
+                loginSession = JsonSerializer.Deserialize<LoginSession>(loginSessionJson);
 
-        return Task.CompletedTask;
-    }
+                apiClient.RefreshToken(loginSession).Wait();
+                UpdateLoginSessionFile(loginSession);
+            }
+        }
 
-    public void Dispose()
-    {
-        _timerSession?.Dispose();
-    }
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("Service is stopping.");
 
-    private async Task SendNotification(BussinessesItem i)
-    {
-        var result = await iftttClient.GetAsync($"/trigger/tgtg_available/with/key/dvmAm_M6vu6EGrIO9tRsxA?value1={i.DisplayName}&value2={i.ItemsAvailable}");
-    }    
+            _timerSession?.Change(Timeout.Infinite, 0);
 
-    private void UpdateLoginSessionFile(LoginSession loginSession)
-    {
-        var loginSessionJson = JsonSerializer.Serialize(loginSession);
-        File.WriteAllText(loginSessionFilePath, loginSessionJson);
+            return Task.CompletedTask;
+        }
+
+        public void Dispose()
+        {
+            _timerSession?.Dispose();
+        }
+
+        private async Task SendNotification(BussinessesItem i)
+        {
+            var result = await iftttClient.GetAsync($"{_appConfig.Value.IftttTriggerUrl}?value1={i.DisplayName}&value2={i.ItemsAvailable}");
+        }
+
+        private void UpdateLoginSessionFile(LoginSession loginSession)
+        {
+            var loginSessionJson = JsonSerializer.Serialize(loginSession);
+            File.WriteAllText(loginSessionFilePath, loginSessionJson);
+        }
     }
 }
