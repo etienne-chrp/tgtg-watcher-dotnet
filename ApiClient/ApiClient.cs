@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json;
+using System.Collections.Generic;
 
 namespace ApiClient
 {
@@ -61,7 +62,7 @@ namespace ApiClient
             loginSession.AccessToken = newToken.AccessToken;
         }
 
-        public async Task ListFavoriteBusinesses(LoginSession loginSession)
+        public async Task<List<BussinessesItem>> ListFavoriteBusinesses(LoginSession loginSession)
         {    
             var result = await PostJsonAsync(
                 "/api/item/v4/",
@@ -77,6 +78,9 @@ namespace ApiClient
                 loginSession.AccessToken);
             
             Console.WriteLine(result.Content.ReadAsStringAsync().Result);
+
+            var items = await JsonSerializer.DeserializeAsync<BussinessesItemsResponse>(await result.Content.ReadAsStreamAsync());
+            return items.BusinessesItems;
         }
     }
 }
