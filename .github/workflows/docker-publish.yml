@@ -85,10 +85,6 @@ jobs:
                 -d "{
                   \"updates\": [
                     {
-                      \"type\": \"web\",
-                      \"docker_image\": \"$(docker inspect $IMAGE_ID --format={{.Id}})\"
-                    },
-                    {
                       \"type\": \"worker\",
                       \"docker_image\": \"$(docker inspect $IMAGE_ID --format={{.Id}})\"
                     }
