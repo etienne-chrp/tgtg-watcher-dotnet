@@ -81,7 +81,7 @@ jobs:
       - name: Release image
         run: >  
                 IMAGE_ID=registry.heroku.com/$IMAGE_NAME/worker &&
-                curl --fail -X PATCH https://api.heroku.com/apps/$IMAGE_NAME/formation
+                curl -X PATCH https://api.heroku.com/apps/$IMAGE_NAME/formation
                 -d "{
                   "updates": [
                     {
