@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -71,9 +70,6 @@ namespace TgtgWatcherService
         private void RefreshSession(object state)
         {
             _logger.LogInformation("Service is running.");
-
-            foreach(DictionaryEntry env in Environment.GetEnvironmentVariables())
-                _logger.LogWarning($"{env.Key}={env.Value}");
 
             if (!File.Exists(loginSessionFilePath))
             {
