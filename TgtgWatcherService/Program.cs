@@ -25,10 +25,11 @@ namespace TgtgWatcherService
                         optional: true);
                     configBuilder.AddEnvironmentVariables();
                 })
-                .ConfigureLogging((hostContext, configLogging) =>
+                .ConfigureLogging((hostContext, logging) =>
                 {
-                    configLogging.AddConfiguration(hostContext.Configuration.GetSection("Logging"));
-                    configLogging.AddConsole();
+                    logging.ClearProviders();
+                    logging.AddConfiguration(hostContext.Configuration.GetSection("Logging"));
+                    logging.AddConsole();
                 })
                 .ConfigureServices((hostContext, services) =>
                 {

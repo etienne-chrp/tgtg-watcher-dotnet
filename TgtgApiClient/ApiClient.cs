@@ -30,13 +30,13 @@ namespace ApiClient
 
         private async Task<HttpResponseMessage> PostJsonAsync(string path, string jsonContent, string authToken = null)
         {
-
             if (authToken != null)
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
 
             var postTask = client.PostAsync(path, new StringContent(jsonContent, Encoding.UTF8, "application/json"));
 
             var msg = await postTask;
+            var content = await msg.Content.ReadAsStringAsync();
 
             try
             {
@@ -44,7 +44,6 @@ namespace ApiClient
             }
             catch (HttpRequestException http_ex)
             {
-                var content = await msg.Content.ReadAsStringAsync();
                 _logger.LogError($"{content}\n{http_ex}");
                 throw;
             }
@@ -92,8 +91,6 @@ namespace ApiClient
                     ""user_id"": ""{loginSession.Data.UserInfo.Id}""
                 }}",
                 loginSession.AccessToken);
-
-            Console.WriteLine(result.Content.ReadAsStringAsync().Result);
 
             var items = await JsonSerializer.DeserializeAsync<BussinessesItemsResponse>(await result.Content.ReadAsStreamAsync());
             return items.BusinessesItems;

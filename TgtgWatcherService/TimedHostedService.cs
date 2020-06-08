@@ -50,6 +50,8 @@ namespace TgtgWatcherService
 
         private void CheckItems(object state)
         {
+            _logger.LogDebug("Check for new items...");
+
             var items = _apiClient.ListFavoriteBusinesses(loginSession).Result;
 
             foreach (var i in items)
@@ -61,15 +63,22 @@ namespace TgtgWatcherService
                 if (previousStatus != null &&
                     previousStatus.ItemsAvailable == 0 &&
                     i.ItemsAvailable > 0)
+                {
+                    _logger.LogInformation($"New items found! {i.DisplayName} - {i.ItemsAvailable}");
                     SendNotification(i).Wait();
+                }
             }
 
             lastStatus = items;
+
+            _logger.LogDebug("New items checked!");
         }
 
         private void RefreshSession(object state)
         {
-            _logger.LogInformation("Service is running.");
+            _logger.LogInformation("Service is running!");
+            
+            _logger.LogDebug("Refreshing session access token...");
 
             if (!File.Exists(loginSessionFilePath))
             {
@@ -87,6 +96,8 @@ namespace TgtgWatcherService
                 _apiClient.RefreshToken(loginSession).Wait();
                 UpdateLoginSessionFile(loginSession);
             }
+
+            _logger.LogDebug("Session access token refreshed!");
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
