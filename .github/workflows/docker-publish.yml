@@ -76,10 +76,11 @@ jobs:
           docker push $IMAGE_ID:$VERSION
           
       - name: Get DOCKER_IMAGE_ID
-        run: echo $(docker inspect $IMAGE_ID --format={{.Id}})
+        run: IMAGE_ID=registry.heroku.com/$IMAGE_NAME/worker && echo $(docker inspect $IMAGE_ID --format={{.Id}})
           
       - name: Release image
-        run: > 
+        run: >  
+                IMAGE_ID=registry.heroku.com/$IMAGE_NAME/worker &&
                 curl --fail -X PATCH https://api.heroku.com/apps/$IMAGE_NAME/formation
                 -d "{
                   "updates": [
