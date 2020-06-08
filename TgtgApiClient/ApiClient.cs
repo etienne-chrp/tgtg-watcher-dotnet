@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 
 namespace ApiClient
 {
@@ -12,10 +13,13 @@ namespace ApiClient
     {
         const string baseUrl = "https://apptoogoodtogo.com/";
 
+        private readonly ILogger _logger;
         private HttpClient client = new HttpClient();
 
-        public ApiClient()
+        public ApiClient(ILogger logger)
         {
+            _logger = logger;
+
             client.BaseAddress = new Uri(baseUrl);
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -24,15 +28,27 @@ namespace ApiClient
             client.DefaultRequestHeaders.Add("User-Agent", "TGTG/19.12.0 (724) (Android/Unknown; Scale/3.00)");
         }
 
-        private async Task<HttpResponseMessage> PostJsonAsync(string path, string jsonContent, string authToken=null)
-        {            
+        private async Task<HttpResponseMessage> PostJsonAsync(string path, string jsonContent, string authToken = null)
+        {
 
-            if(authToken != null)
+            if (authToken != null)
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
 
             var postTask = client.PostAsync(path, new StringContent(jsonContent, Encoding.UTF8, "application/json"));
 
             var msg = await postTask;
+
+            try
+            {
+                msg.EnsureSuccessStatusCode();
+            }
+            catch (HttpRequestException http_ex)
+            {
+                var content = await msg.Content.ReadAsStringAsync();
+                _logger.LogError($"{content}\n{http_ex}");
+                throw;
+            }
+
             return msg;
         }
 
@@ -56,14 +72,14 @@ namespace ApiClient
                 "/api/auth/v1/token/refresh",
                 $@"{{
                 ""refresh_token"": ""{loginSession.RefreshToken}""
-            }}");   
+            }}");
 
             var newToken = await JsonSerializer.DeserializeAsync<LoginSession>(await result.Content.ReadAsStreamAsync());
             loginSession.AccessToken = newToken.AccessToken;
         }
 
         public async Task<List<BussinessesItem>> ListFavoriteBusinesses(LoginSession loginSession)
-        {    
+        {
             var result = await PostJsonAsync(
                 "/api/item/v4/",
                 $@"{{
@@ -76,7 +92,7 @@ namespace ApiClient
                     ""user_id"": ""{loginSession.Data.UserInfo.Id}""
                 }}",
                 loginSession.AccessToken);
-            
+
             Console.WriteLine(result.Content.ReadAsStringAsync().Result);
 
             var items = await JsonSerializer.DeserializeAsync<BussinessesItemsResponse>(await result.Content.ReadAsStreamAsync());

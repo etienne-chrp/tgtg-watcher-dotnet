@@ -1,5 +1,4 @@
 using System;
-using System.Configuration;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -27,13 +26,15 @@ namespace TgtgWatcherService
         {
             BaseAddress = new Uri("https://maker.ifttt.com")
         };
-        private ApiClient.ApiClient apiClient = new ApiClient.ApiClient();
+        private ApiClient.ApiClient _apiClient;
         private LoginSession loginSession = null;
 
         public TimedHostedService(ILogger<TimedHostedService> logger, IOptions<AppConfig> appConfig)
         {
             _logger = logger;
             _appConfig = appConfig;
+
+            _apiClient = new ApiClient.ApiClient(_logger);
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -49,7 +50,7 @@ namespace TgtgWatcherService
 
         private void CheckItems(object state)
         {
-            var items = apiClient.ListFavoriteBusinesses(loginSession).Result;
+            var items = _apiClient.ListFavoriteBusinesses(loginSession).Result;
 
             foreach (var i in items)
             {
@@ -72,7 +73,7 @@ namespace TgtgWatcherService
 
             if (!File.Exists(loginSessionFilePath))
             {
-                loginSession = apiClient.LoginByEmail(
+                loginSession = _apiClient.LoginByEmail(
                     _appConfig.Value.TgtgUsername,
                     _appConfig.Value.TgtgPassword
                 ).Result;
@@ -83,7 +84,7 @@ namespace TgtgWatcherService
                 var loginSessionJson = File.ReadAllText(loginSessionFilePath);
                 loginSession = JsonSerializer.Deserialize<LoginSession>(loginSessionJson);
 
-                apiClient.RefreshToken(loginSession).Wait();
+                _apiClient.RefreshToken(loginSession).Wait();
                 UpdateLoginSessionFile(loginSession);
             }
         }
