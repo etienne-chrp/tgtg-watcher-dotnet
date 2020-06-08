@@ -83,7 +83,7 @@ jobs:
                 IMAGE_ID=registry.heroku.com/$IMAGE_NAME/worker &&
                 curl -X PATCH https://api.heroku.com/apps/$IMAGE_NAME/formation
                 -d "{
-                  "updates": [
+                  \"updates\": [
                     {
                       \"type\": \"worker\",
                       \"docker_image\": \"$(docker inspect $IMAGE_ID --format={{.Id}})\"
