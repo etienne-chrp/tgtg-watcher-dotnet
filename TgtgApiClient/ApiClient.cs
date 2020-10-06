@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -25,7 +25,7 @@ namespace ApiClient
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             client.DefaultRequestHeaders.AcceptLanguage.Clear();
             client.DefaultRequestHeaders.AcceptLanguage.Add(new StringWithQualityHeaderValue("en-US"));
-            client.DefaultRequestHeaders.Add("User-Agent", "TGTG/19.12.0 (724) (Android/Unknown; Scale/3.00)");
+            client.DefaultRequestHeaders.Add("User-Agent", "TGTG/20.9.1 (317) (Android/Unknown; Scale/3.00)");
         }
 
         private async Task<HttpResponseMessage> PostJsonAsync(string path, string jsonContent, string authToken = null)
