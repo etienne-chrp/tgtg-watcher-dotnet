@@ -80,7 +80,7 @@ namespace ApiClient
         public async Task<List<BussinessesItem>> ListFavoriteBusinesses(LoginSession loginSession)
         {
             var result = await PostJsonAsync(
-                "/api/item/v4/",
+                "/api/item/v6/",
                 $@"{{
                     ""favorites_only"": true,
                     ""origin"": {{
